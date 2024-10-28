@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dao.OrdermsgDAO">
+    <resultMap type="com.entity.Ordermsg" id="BaseResultMap">
+      <id column="id" property="id" jdbcType="INTEGER"/>
+      <result column="orderno" property="orderno" jdbcType="VARCHAR"/>
+      <result column="memberid" property="memberid" jdbcType="VARCHAR"/>
+      <result column="total" property="total" jdbcType="VARCHAR"/>
+      <result column="fkstatus" property="fkstatus" jdbcType="VARCHAR"/>
+      <result column="shstatus" property="shstatus" jdbcType="VARCHAR"/>
+      <result column="addrid" property="addrid" jdbcType="INTEGER"/>
+      <result column="zffs" property="zffs" jdbcType="VARCHAR"/>
+      <result column="savetime" property="savetime" jdbcType="VARCHAR"/>
+      <result column="company" property="company" jdbcType="VARCHAR"/>
+      <result column="waybillno" property="waybillno" jdbcType="VARCHAR"/>
+    </resultMap>
+    
+    <insert id="add" parameterType="Ordermsg">
+      insert into ordermsg values(null,#{orderno},#{memberid},#{total},#{fkstatus},'',#{addrid},#{zffs},now(),#{company},#{waybillno})
+    </insert>
+    
+    <select id="selectPayment" parameterType="Int" resultMap="BaseResultMap">
+      select * from ordermsg where memberid=#{0} and (fkstatus='待付款' or fkstatus='已付款') and shstatus!='已收货'  order by id desc
+    </select>
+    
+    <select id="selectShouhuo" parameterType="Int" resultMap="BaseResultMap">
+      select * from ordermsg where memberid=#{0} and shstatus='待收货' order by id desc
+    </select>
+    
+    <select id="selectAccomplish" parameterType="Int" resultMap="BaseResultMap">
+      select * from ordermsg where memberid=#{0} and shstatus='已收货' order by id desc
+    </select>
+    
+    
+    <select id="selectAll" parameterType="HashMap" resultMap="BaseResultMap">
+      select * from ordermsg where 1=1 
+      <if test="key!=null and key!=''">
+        and (orderno like "%"#{key}"%" or memberid in(select id from member where tname like "%"#{key}"%"))
+      </if>
+      <if test="fkstatus!=null and fkstatus!=''">
+        and fkstatus=#{fkstatus}
+      </if>
+      <if test="shstatus!=null and shstatus!=''">
+        and shstatus=#{shstatus}
+      </if>
+      order by id desc
+    </select>
+    
+    <update id="updateSh" parameterType="Int">
+      update ordermsg set shstatus='已收货' where id = #{id}
+    </update>
+    
+    <select id="searchOrdername"  resultMap="BaseResultMap">
+      select * from ordermsg where orderno like "%"#{order}"%"
+    </select>
+    
+    <delete id="delete" parameterType="Int">
+      delete from ordermsg where id = #{id}
+    </delete>
+    
+    <select id="findById" parameterType="Int" resultType="Ordermsg">
+      select * from ordermsg where id = #{id}
+    </select>
+    
+    <update id="update" parameterType="Ordermsg">
+      update ordermsg 
+      <set>
+        <if test="shstatus!=null">
+          shstatus=#{shstatus},
+        </if>
+        <if test="fkstatus!=null">
+          fkstatus=#{fkstatus},
+        </if>
+        <if test="zffs!=null">
+          zffs=#{zffs},
+        </if>
+        <if test="company!=null">
+          company=#{company},
+        </if>
+        <if test="waybillno!=null">
+          waybillno=#{waybillno}
+        </if>
+      </set>
+      where id =#{id}
+        </update>
+        
+        
+     <select id="selectSaleMoney" resultMap="BaseResultMap">
+      select DISTINCT(DATE_FORMAT(savetime,'%Y-%c-%d')) as savetime,SUM(total) as total from ordermsg where fkstatus='已付款'  GROUP BY DATE_FORMAT(savetime,'%Y-%c-%d') order by DATE_FORMAT(savetime,'%Y-%c-%d')
+    </select>
+    
+    <select id="orderNum" resultMap="BaseResultMap">
+      select DISTINCT(DATE_FORMAT(savetime,'%Y-%c-%d')) as savetime,COUNT(*) as orderno from ordermsg GROUP BY DATE_FORMAT(savetime,'%Y-%c-%d')
+    </select>
+    
+	
+</mapper>
+
